@@ -125,7 +125,7 @@ export async function start(step: Step) {
   let isDone = false;
   let finalSteps: Step[] = [];
 
-  async function run(state: State, steps: Step[] = []) {
+  async function run(state: State, steps: Step[]) {
     if (state.isDone()) {
       isDone = true;
       finalSteps = steps;
@@ -139,15 +139,14 @@ export async function start(step: Step) {
         }
         if (knownStates.every(s => !s.isEuqal(newState))) {
           knownStates.push(newState);
-          steps.push(newState.pieces);
-          await run(newState, steps);
+          await run(newState, [...steps, newState.pieces]);
           continue;
         }
       }
     }
   }
 
-  await run(new State(step));
+  await run(new State(step), [step]);
   console.log("Done after", finalSteps.length, "steps");
   finalSteps = await optimize(finalSteps);
   console.log("Optimized to", finalSteps.length, "steps");

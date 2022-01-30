@@ -1,12 +1,38 @@
+.App {
+  display: flex;
+}
+
 .Board {
-  border: 4px solid cyan;
+  border: 4px solid darkgray;
   width: 300px;
   height: 300px;
   position: relative;
+}
+
+.Board::after {
+  content: ' ';
+  display: block;
+  height: 50px;
+  width: 4px;
+  position: absolute;
+  top: 100px;
+  right: -4px;
+  background: white;
 }
 
 .Piece {
   position: absolute;
   width: 50px;
   height: 50px;
+  opacity: 0.9;
+}
+
+input {
+  width: 64px;
+}
+
+.PieceInputLabel {
+  display: inline-block;
+  width: 48px;
+  text-align: end;
 }
