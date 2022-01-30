@@ -1,4 +1,7 @@
 {
+  "scripts": {
+    "build": "esbuild src/app.ts --bundle --minify --watch --outfile=app.js"
+  },
   "dependencies": {
     "lit-html": "^2.1.2"
   },
