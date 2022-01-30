@@ -1,14 +1,14 @@
 const COL = 6;
 const ROW = 6;
 
-export interface Piece {
+export type Piece = {
   fix: "x" | "y";
   x: number;
   y: number;
   size: number;
-}
+};
 
-type Step = Piece[];
+export type Step = Piece[];
 
 function isPieceOn(
   { fix, x, y, size }: Piece,
@@ -39,10 +39,6 @@ export class State {
     this.numPieces = pieces.length;
   }
 
-  getPiece(index: number) {
-    return this.pieces[index];
-  }
-
   private isEmpty(x: number, y: number) {
     if (x < 0 || x >= COL || y < 0 || y >= ROW) {
       // Outside the board.
@@ -53,7 +49,7 @@ export class State {
 
   isEuqal(state: State) {
     return this.pieces.every((p1, index) =>
-      isPieceEqual(p1, state.getPiece(index))
+      isPieceEqual(p1, state.pieces[index])
     );
   }
 
@@ -99,8 +95,29 @@ export class State {
   }
 }
 
-function isKnownState(states: State[], state: State) {
-  return states.some(s => s.isEuqal(state));
+function isOneMoveDiff(step1: Step, step2: Step) {
+  let move = 0;
+  for (let i = 0; i < step1.length; i++) {
+    let p1 = step1[i];
+    let p2 = step2[i];
+    move += Math.abs(p1.x - p2.x) + Math.abs(p1.y - p2.y);
+  }
+  return move == 1;
+}
+
+async function optimize(steps: Step[], cursor: number = 0): Promise<Step[]> {
+  await new Promise(resolve => setTimeout(resolve));
+  let cursorStep = steps[cursor];
+  if (!cursorStep) {
+    return steps;
+  }
+  for (let i = steps.length - 1; i > cursor; i--) {
+    if (isOneMoveDiff(cursorStep, steps[i])) {
+      steps = [...steps.slice(0, cursor + 1), ...steps.slice(i)];
+      return optimize(steps, cursor + 1);
+    }
+  }
+  return optimize(steps, cursor + 1);
 }
 
 export async function start(step: Step) {
@@ -120,7 +137,7 @@ export async function start(step: Step) {
         if (isDone) {
           return;
         }
-        if (!isKnownState(knownStates, newState)) {
+        if (knownStates.every(s => !s.isEuqal(newState))) {
           knownStates.push(newState);
           steps.push(newState.pieces);
           await run(newState, steps);
@@ -132,5 +149,8 @@ export async function start(step: Step) {
 
   await run(new State(step));
   console.log("Done after", finalSteps.length, "steps");
+  finalSteps = await optimize(finalSteps);
+  console.log("Optimized to", finalSteps.length, "steps");
+  let i = 0;
   return finalSteps;
 }
