@@ -41,7 +41,8 @@ const colors = [
   "limegreen",
   "lightcoral",
   "seagreen",
-  "yellowgreen"
+  "yellowgreen",
+  "aquamarine"
 ];
 
 const Piece = ({ fix, x, y, size }: Piece, index: number) => {
@@ -53,7 +54,9 @@ const Piece = ({ fix, x, y, size }: Piece, index: number) => {
     [hwAttr]: `${size * cellSize}px`
   };
   return html`
-    <div class="Piece" style=${styleMap(styles)}></div>
+    <div class="Piece" style=${styleMap(styles)}>
+      ${index == 0 ? "曹操" : index}
+    </div>
   `;
 };
 
@@ -68,6 +71,7 @@ const onSelectChange = (index: number) => (e: InputEvent) => {
   let target = e.target as HTMLSelectElement;
   // @ts-expect-error
   state.steps[0][index].fix = target.value;
+  state.current = 0;
   state.steps = [state.steps[0]];
 };
 
@@ -75,67 +79,104 @@ const onInputInitialStep = (index: number, field: keyof Piece) => (
   e: InputEvent
 ) => {
   let target = e.target as HTMLInputElement;
+  let value = field == "size" ? +target.value : +target.value - 1;
   // @ts-expect-error
-  state.steps[0][index][field] = +target.value;
+  state.steps[0][index][field] = value;
+  state.current = 0;
+  state.steps = [state.steps[0]];
+};
+
+const onClickRemovePiece = (index: number) => () => {
+  state.steps[0].splice(index, 1);
+  state.current = 0;
+  state.steps = [state.steps[0]];
+};
+
+const onClickAddPiece = () => {
+  state.steps[0].push({ fix: "y", x: 0, y: 0, size: 2 });
+  state.current = 0;
   state.steps = [state.steps[0]];
 };
 
 const PieceInput = ({ fix, x, y, size }: Piece, index: number) => {
+  const removeButton =
+    index > 7
+      ? html`
+          <button @click=${onClickRemovePiece(index)}>x</button>
+        `
+      : "";
   return html`
-    <div>
-      <span class="PieceInputLabel">${index == 0 ? "曹操" : index} - </span>
-      <select value="${fix}" @change=${onSelectChange(index)}>
-        <option value="x" ?selected=${fix == "x"}>竖</option>
-        <option value="y" ?selected=${fix == "y"}>横</option>
-      </select>
-      <label>
-        行
+    <tr>
+      <td>
+        <span class="PieceInputLabel">${index == 0 ? "曹操" : index} - </span>
+      </td>
+      <td>
+        <select value="${fix}" @change=${onSelectChange(index)}>
+          <option value="x" ?selected=${fix == "x"}>竖</option>
+          <option value="y" ?selected=${fix == "y"}>横</option>
+        </select>
+      </td>
+      <td>
         <input
           type="number"
-          value="${y}"
-          min="0"
+          value="${y + 1}"
+          min="1"
           max="6"
           @input=${onInputInitialStep(index, "y")}
         />
-      </label>
-      <label>
-        列
+      </td>
+      <td>
         <input
           type="number"
-          value="${x}"
-          min="0"
+          value="${x + 1}"
+          min="1"
           max="6"
           @input=${onInputInitialStep(index, "x")}
         />
-      </label>
-      <label>
-        尺寸
+      </td>
+      <td>
         <input
           type="number"
           value="${size}"
-          min="0"
-          max="6"
+          min="1"
+          max="4"
           @input=${onInputInitialStep(index, "size")}
         />
-      </label>
-    </div>
+      </td>
+      <td>${removeButton}</td>
+    </tr>
   `;
 };
 
 const Form = (initial: Step) => {
   const rows = initial.map(PieceInput);
-  // const rows = "";
   return html`
     <div>
-      ${rows}
-      <button @click=${run}>Run</button>
+      <table>
+        <thead>
+          <tr>
+            <th></th>
+            <th>方向</th>
+            <th>行</th>
+            <th>列</th>
+            <th>大小</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+      </table>
+      <div>
+        <button @click=${onClickAddPiece}>+ Add</button>
+        <button @click=${run}>Run</button>
+      </div>
     </div>
   `;
 };
 
 const onProgressInputStep = (e: InputEvent) => {
   let target = e.target as HTMLInputElement;
-  state.current = +target.value;
+  state.current = +target.value - 1;
 };
 
 const App = ({ steps, current }: State) => {
@@ -144,11 +185,11 @@ const App = ({ steps, current }: State) => {
     <div class="App">
       <div>
         ${Board(steps[current])}
-        <progress value="${current}" max="${total}"></progress>
+        <progress value="${current + 1}" max="${total}"></progress>
         <input
           type="number"
-          value="${current}"
-          min="0"
+          value="${current + 1}"
+          min="1"
           max="${total}"
           @input=${onProgressInputStep}
         />
