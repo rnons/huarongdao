@@ -188,9 +188,9 @@ const App = ({ steps, current }: State) => {
         <progress value="${current + 1}" max="${total}"></progress>
         <input
           type="number"
-          value="${current + 1}"
           min="1"
           max="${total}"
+          .value=${current + 1}
           @input=${onProgressInputStep}
         />
         / <span>${total}</span>
