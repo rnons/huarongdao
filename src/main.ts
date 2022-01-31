@@ -10,20 +10,6 @@ export type Piece = {
 
 export type Step = Piece[];
 
-function isPieceOn(
-  { fix, x, y, size }: Piece,
-  xt: number,
-  yt: number
-): boolean {
-  if (fix == "x" && x == xt) {
-    return y <= yt && y + size > yt;
-  }
-  if (fix == "y" && y == yt) {
-    return x <= xt && x + size > xt;
-  }
-  return false;
-}
-
 function range(start: number, end: number): number[] {
   return Array.from({ length: end - start }).map((_, index) => start + index);
 }
@@ -34,17 +20,31 @@ function isPieceEqual(p1: Piece, p2: Piece) {
 
 export class State {
   public numPieces: number;
+  private board: number[][] = [];
 
   constructor(public pieces: Piece[]) {
     this.numPieces = pieces.length;
+    for (let x = 0; x < COL; x++) {
+      this.board[x] = [];
+      for (let y = 0; y < COL; y++) {
+        this.board[x][y] = 1; // 1 means empty
+      }
+    }
+    for (const { fix, x, y, size } of pieces) {
+      if (fix == "x") {
+        for (let i = 0; i < size; i++) {
+          this.board[x][y + i] = 0; // 0 means filled
+        }
+      } else {
+        for (let i = 0; i < size; i++) {
+          this.board[x + i][y] = 0; // 0 means filled
+        }
+      }
+    }
   }
 
   private isEmpty(x: number, y: number) {
-    if (x < 0 || x >= COL || y < 0 || y >= ROW) {
-      // Outside the board.
-      return false;
-    }
-    return !this.pieces.some(p => isPieceOn(p, x, y));
+    return this.board[x]?.[y];
   }
 
   isEuqal(state: State) {
